@@ -48,32 +48,32 @@ Computer Science \& Technology\\
 
 %%%%%%%%% ABSTRACT
 \begin{abstract}
-   	Chinese poem is very popular in China, for it's meaningful, outstanding and gentle. It is very common in China that children can recite lot's of poems before primary school. As a part of language, poem can represent the Chinese culture totally. 
-	In Chinese primary school, most Chinese teachers will teach children how to make sentences based on what they look. In addition, it's a way to cultivate the ability of communication for children.
+   	Chinese poem is very popular in China, for it's meaningful, outstanding and elegant. It is quite common in China that children can recite lots of poems before primary school. As a part of language, poem represents Chinese culture and history. 
+	In Chinese primary school, most Chinese teachers will teach children how to make sentences based on what they see and hear. In addition, it's a way to cultivate the kids' ability to communicate.
 
-	As the innovation of neural network has springed up these years, it's very interesting for computer whether they can make sentences based on an image. To make the thing even fantastic, we want to make the computer to generate the poem based on an specific image.
+	As the innovation of neural network has been booming these years, it's very interesting for computer whether they can make sentences based on an image. To make the thing even fantastic, we want to make the computer to generate the poem based on an specific image.
 	
 \end{abstract}
 
 %%%%%%%%% BODY TEXT
 \section{Introduction}
-Deep learning has been proven in recent years to be an extremely useful tool for discriminative tasks. Through layers of linear transforms combined with nonlinearities, these systems learn to transform their input into an ideal representation across which we can draw clear decision boundaries. However It remains to be seen how this success might play out in the field of generative models. For computer, create the news based on the things it has learned must be the next generation.
+Deep learning has been proven in recent years to be an extremely useful tool for discriminative tasks. Through layers of linear transformation combined with nonlinearities, these systems learn to transform their input into an ideal representation across which we can draw clear decision boundaries. However, it remains to be discussed how this success might play out in the field of generative models. For computer, creating the new things based on what it has learned must be the magnet in the next generation.
 
-In this paper, we will develop a generative model that can recognize the image, extract the features in the image, and generate the poem based on the image. This is very basic for people, but hard for computer. In some sense, we want to explore the speaking ability of computer.
+In this paper, we will develop a generative model that can recognize the image, extract the features in the image, and generate the poem based on the image. This is very basic for people, but rather hard for computer. In some sense, we want to explore the speaking ability of computer.
 %-------------------------------------------------------------------------
 \subsection{Problem Statement}
-This problem is a generative problem. The generative model should generate the poem that base on an specific image, which means that the poem should describe the image. 
+This problem is a generative problem. The generative model will generate the poem that is based on an specific image, which means that the poem should describe the image. 
 
-For this purpose, the input image must contains some information and people can easily find out what the emotion it convey. The graph contains with different emotion and things is best for both people and computer to create the poem.
+For this purpose, the input image must contain some information and people can easily find out what emotions it convey. We presuppose that the graph is rich in emotion and is suitable for both human and computer to create the poem.
 
-The output should be the beautiful poem that it's meaning is closed to this image. There are also some standards to judge whether the poem is good or not. The standard includes the atmosphere contained in the poem, and the meaning of the poem. Sounds of the poem is another factor which influence the performance a lot.
+The output should be the beautiful poem whose meaning is close to this image. There are also some standards to judge whether the poem is good or not. The standard includes the atmosphere showed in the poem and the meaning of the poem. Rhyme is another factor which influence the performance a lot.
 
 
 \section{Related Work}
-	Generating poem is popular in recent years, and there are many people research on it. On the other hand, explaining image with sentence has also made great progress after deep learning widely used. Our approach is a combination of above two aspects, we select two methods that performing well in corresponding aspects, and try to get a fantastic result.
+	Generating poem is popular in recent years, and there are abundant research on it. On the other hand, explaining image with words has also made great progress after deep learning is widely used. Our approach is a combination of the above two aspects, we select two methods that performing well in corresponding aspects, and try to get a satisfactory result.
 \section{Plan}
 \subsection{Image to Sentence}
-The first part of this problem is to generate a sentence based on the image. This sentence must contain the detail of this image, and it can describe this image.
+The first part of this problem is to generate a sentence based on the image. This sentence must contain the details of this image, and it can describe this image.
 
 The method we want to use here is proposed by Junhua Mao\footnote{ Junhua Mao, Wei Xu, Yi Yang, Jiang Wang, Alan L. Yuille : Explain Images with Multimodal Recurrent Neural Networks.}. We use a multimodal Recurrent Neural Networks (m-RNN) model to address both the task of generating novel sentences descriptions for images, and the task of image and sentence retrieval. The whole m-RNN architecture contains a language model part, an image part and a multimodal part. The language model part learns the dense feature embedding for each word in the dictionary and stores the semantic temporal context in recurrent layers. The image part contains a deep Convolutional Neural Network (CNN) \footnote{A. Krizhevsky, I. Sutskever, and G. E. Hinton. Imagenet classification with deep convolutional neural networks. In NIPS, pages 1097–1105, 2012.} which extracts image features.
 
@@ -89,6 +89,6 @@ The dataset we used is IAPR TC-12 dataset, which used to training the model that
 
 The other is Chinese Poetry corpus to train for the generate part.
 \section{Intermediate Result}
-We have built a temporary framework and consulted one expert about this problem. The expert thought it's a very good  and practical reasonable idea and gave some advices.
-We will soon try to use theano to implement our idea. Recent three weeks is the deadline of building a cpu so we don't have enough time to try our idea.
+We have built a temporary framework and consulted one expert about this problem. The expert thought it's a practical idea and gave some advice.
+We will soon try to use theano to implement our idea. Recent three weeks are the deadline of building a cpu so we don't have enough time to try our idea.
 \end{document}
