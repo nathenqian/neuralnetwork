@@ -215,7 +215,7 @@ class LSTM(LayerBase):
     def fprop(self, y_in):
         outputs, updates = theano.scan(fn = self._one_step,
                                        sequences = T.arange(y_in.shape[-1]),
-                                       outputs_info = self._get_init_state(),
+                                       outputs_info = self._get_init_state(x),
                                        non_sequences = [y_in],
                                        truncate_gradient = -1)
         return outputs[0]
@@ -238,7 +238,55 @@ class LSTM(LayerBase):
         h_t = h_t.dimshuffle(0,1,3,2)
         return h_t, c_t
 
+    def _get_init_state(self, x):
+        h_0 = T.zeros((x.shape[0], x.shape[1], self.output_h, 1), dtype=theano.config.floatX())
+        c_0 = T.zeros((x.shape[0], x.shape[1], self.output_h, 1), dtype=theano.config.floatX())
+        return h_0, c_0
+
     def get_params(self):
         return [W_i, W_f, W_o, W_c,
                 H_i, H_f, H_o, H_c,
                 b_i, b_f, b_o, b_c]
+
+class RNN(LayerBase):
+    """
+    h_t = tanh(W * X + H * h_{t-1} + b)
+    """
+    W = None
+    H = None
+    b = None
+
+    def __init__(self, input_h, output_h, **kwargs):
+        super(RNN, self).__init__(**kwargs)
+        self.input_h = input_h
+        self.output_h = output_h
+        
+        self.W = self.init_weights((input_h, output_h))
+        self.H = self.init_weights((output_h, output_h))
+        self.b = self.init_weights((output_h,))
+
+    def fprop(self, y_in):
+        outputs, updates = theano.scan(fn = self._one_step,
+                                       sequences = T.arange(y_in.shape[-1]),
+                                       outputs_info = self._get_init_state(x),
+                                       non_sequences = [y_in],
+                                       truncate_gradient = -1)
+        return outputs
+
+    def _get_input(self, x, t):
+        return x[:,:,:,t:t+1]
+
+    def _one_step(self, t, h_t1, x):
+        tmp_x = self._get_input(x, t)
+        def _dot(w, x):
+            return T.tensordot(w, x, axes=[[2], [0]])
+        h_t = tanhFunc(_dot(self.W, tmp_x)+_dot(self.H, h_t1)+b.dimshuffle('x','x','x',0))
+        h_t = h_t.dimshuffle(0,1,3,2)
+        return h_t
+
+    def _get_init_state(self, x):
+        h_0 = T.zeros((x.shape[0], x.shape[1], self.output_h, 1), dtype=theano.config.floatX())
+        return h_0
+
+    def get_params(self):
+        return [W, H, b]
