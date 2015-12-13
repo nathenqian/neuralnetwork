@@ -268,7 +268,7 @@ class RNN(LayerBase):
     def _fprop(self, y_in):
         outputs, updates = theano.scan(fn = self._one_step,
                                        sequences = T.arange(y_in.shape[-1]),
-                                       outputs_info = self._get_init_state(x),
+                                       outputs_info = self._get_init_state(y_in),
                                        non_sequences = [y_in],
                                        truncate_gradient = -1)
         return outputs
@@ -279,13 +279,13 @@ class RNN(LayerBase):
     def _one_step(self, t, h_t1, x):
         tmp_x = self._get_input(x, t)
         def _dot(w, x):
-            return T.tensordot(w, x, axes=[[2], [0]])
+            return T.tensordot(x, w, axes=[[2], [0]])
         h_t = tanhFunc(_dot(self.W, tmp_x)+_dot(self.H, h_t1)+self.b.dimshuffle('x','x','x',0))
         h_t = h_t.dimshuffle(0,1,3,2)
         return h_t
 
     def _get_init_state(self, x):
-        h_0 = T.zeros((x.shape[0], x.shape[1], self.output_dim, 1), dtype=theano.config.floatX())
+        h_0 = T.zeros((x.shape[0], x.shape[1], self.output_dim, 1), dtype=theano.config.floatX)
         return h_0
 
     def get_params(self):
@@ -309,8 +309,8 @@ class ColumnWiseFullyConnected(LayerBase):
 
     def _fprop(self, y_in):
         x = y_in.dimshuffle(0,1,3,2)
-        z = T.tensordot(x, self.W)
-        z = self.nonlinearity(z.dimshuffle(0,1,3,2) + b.dimshuffle('x', 'x', 0, 'x'))
+        z = T.tensordot(x, self.W, axes = 1)
+        z = self.nonlinearity(z.dimshuffle(0,1,3,2) + self.b.dimshuffle('x', 'x', 0, 'x'))
         return z
 
     def get_params(self):
