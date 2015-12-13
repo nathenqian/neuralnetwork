@@ -20,10 +20,13 @@ def createSentences(str_):
     sentences = str_[start:end].split(";")[:-1]
     for i in range(0, len(sentences)):
         sentence = sentences[i]
+        sentence = sentence.replace(",", "")
         while sentence[0] == " ":
             sentence = sentence[1:]
         while sentence[-1] == " ":
             sentence = sentence[:-1]
+        while (sentence.replace("  ", " ") != sentence):
+            sentence = sentence.replace("  ", " ")
         sentences[i] = sentence
     return sentences
 
@@ -72,8 +75,11 @@ def calcWordNumber():
             processRead(file_content)
     print "total words number is " + str(word_index) # 6378
 
-def main(config_dir):
-    for index in range(0, 1):
+def main(index):
+    print "process index " + str(index)
+    global unit_list
+    unit_list = []
+    for index in range(index, index + 1):
         # print "calcWordNumber processing " + str(index)
         dir_ = annotation_dir
         if index < 10:
@@ -84,10 +90,29 @@ def main(config_dir):
         for f in files:
             file_content = readFile(f)
             processRead(file_content)
+
+    invalid_list = {}
+    for i in range(0, len(unit_list)):
+        try:
+            s = dumps(unit_list[i], indent = 4)
+        except Exception as e:
+            invalid_list[i] = 1
+    final_list = []
+    for i in range(0, len(unit_list)):
+        if i not in invalid_list:
+            final_list.append(unit_list[i])
+    if index < 10:
+        digit = "0" + str(index)
+    else:
+        digit = str(index)
+    config_dir = "/Users/nathenqian/Documents/code/nueral/iaprtc12/data_config_" + digit + ".conf"
     with open(config_dir, "w") as f:
-        global unit_list
-        f.write(dumps(unit_list, indent = 4))
+        f.write(dumps(final_list, indent = 4))
+            # f.write(str(unit_list[2214]))
+            # if (i == 2214):
+                # break
     # print "total words number is " + str(word_index) # 6378
 # calcWordNumber()
 # caffe_net = CaffeNet()
-main("/Users/nathenqian/Documents/code/nueral/iaprtc12/data_config.conf")
+for i in range(0, 41):
+    main(i)

@@ -29,4 +29,4 @@ def main(config_dir):
     # print "total words number is " + str(word_index) # 6378
 # calcWordNumber()
 caffe_net = CaffeNet()
-main("/Users/nathenqian/Documents/code/nueral/iaprtc12/data_config.conf")
+main("/Users/nathenqian/Documents/code/nueral/iaprtc12/data_config_01.conf")

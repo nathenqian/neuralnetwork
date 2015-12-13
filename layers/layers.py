@@ -322,7 +322,7 @@ class ColumnWiseSoftmax(LayerBase):
     constant : temperature = 1.
     """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(ColumnWiseSoftmax, self).__init__(**kwargs)
 
     def fprop(self, y_in):

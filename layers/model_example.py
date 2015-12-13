@@ -43,16 +43,16 @@ def local_fprop(x, y_truth):
             lr = layer.learing_rate
             wd = layer.weight_decay
             g = T.grad(cost=my_cost, wrt=p)
-            p_delta = theano.,shared(floatX(np.zeros(p.get_value().shape)))
+            p_delta = theano.shared(floatX(np.zeros(p.get_value().shape)))
             updates.append(p, p+p_delta*momemtum-lr*(g+wd*p))
             updates.append(p_delta, p_delta*momemtum-lr*(g+wd*p))
-    
+
     return my_out, my_cost, my_update
 
 
 if __name__ == '__main__':
-    data = T.tensor4d()
-    label = T.tensor4d()
+    data = T.tensor4()
+    label = T.tensor4()
 
     output, cost, update = local_fprop(data, label)
     train_func = theano.function(inputs=[data, label], outputs=[output, cost], updates=update)
