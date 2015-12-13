@@ -40,12 +40,12 @@ def local_fprop(x, y_truth):
     momemtum = 0.9
     for layer in layers:
         for p in layer.get_params():
-            lr = layer.learing_rate
+            lr = layer.learning_rate
             wd = layer.weight_decay
             g = T.grad(cost=my_cost, wrt=p)
             p_delta = theano.shared(floatX(np.zeros(p.get_value().shape)))
-            updates.append(p, p+p_delta*momemtum-lr*(g+wd*p))
-            updates.append(p_delta, p_delta*momemtum-lr*(g+wd*p))
+            my_update.append((p, p+p_delta*momemtum-lr*(g+wd*p)))
+            my_update.append((p_delta, p_delta*momemtum-lr*(g+wd*p)))
 
     return my_out, my_cost, my_update
 

@@ -218,29 +218,27 @@ class LSTM(LayerBase):
                                        outputs_info = self._get_init_state(x),
                                        non_sequences = [y_in],
                                        truncate_gradient = -1)
-        return outputs[0]
+        z = outputs[0].dimshuffle(1,2,3,0)
+        return z
 
     def _get_input(self, x, t):
-        return x[:,:,:,t:t+1]
+        return x[:,:,:,t]
 
     def _one_step(self, t, h_t1, c_t1, x):
         tmp_x = self._get_input(x, t)
         def _dot(w, x):
-            return T.tensordot(w, x, axes=[[2], [0]])
-        i_t = sigmoidFunc(_dot(self.W_i, tmp_x)+_dot(self.H_i, h_t1)+self.b_i.dimshuffle('x','x','x',0))
-        f_t = sigmoidFunc(_dot(self.W_f, tmp_x)+_dot(self.H_f, h_t1)+self.b_f.dimshuffle('x','x','x',0))
-        o_t = sigmoidFunc(_dot(self.W_o, tmp_x)+_dot(self.H_o, h_t1)+self.b_o.dimshuffle('x','x','x',0))
+            return T.tensordot(x, w, axes=1)
+        i_t = sigmoidFunc(_dot(self.W_i, tmp_x)+_dot(self.H_i, h_t1)+self.b_i.dimshuffle('x','x',0))
+        f_t = sigmoidFunc(_dot(self.W_f, tmp_x)+_dot(self.H_f, h_t1)+self.b_f.dimshuffle('x','x',0))
+        o_t = sigmoidFunc(_dot(self.W_o, tmp_x)+_dot(self.H_o, h_t1)+self.b_o.dimshuffle('x','x',0))
 
-        c_t = f_t * c_t1 + i_t * tanhFunc(_dot(self.W_c, tmp_x)+_dot(self.H_c, h_t1)+self.b_c.dimshuffle('x','x','x',0))
+        c_t = f_t * c_t1 + i_t * tanhFunc(_dot(self.W_c, tmp_x)+_dot(self.H_c, h_t1)+self.b_c.dimshuffle('x','x',0))
         h_t = o_t * tanhFunc(c_t)
-
-        c_t = c_t.dimshuffle(0,1,3,2)
-        h_t = h_t.dimshuffle(0,1,3,2)
         return h_t, c_t
 
     def _get_init_state(self, x):
-        h_0 = T.zeros((x.shape[0], x.shape[1], self.output_dim, 1), dtype=theano.config.floatX())
-        c_0 = T.zeros((x.shape[0], x.shape[1], self.output_dim, 1), dtype=theano.config.floatX())
+        h_0 = T.zeros((x.shape[0], x.shape[1], self.output_dim), dtype=theano.config.floatX())
+        c_0 = T.zeros((x.shape[0], x.shape[1], self.output_dim), dtype=theano.config.floatX())
         return h_0, c_0
 
     def get_params(self):
@@ -271,21 +269,22 @@ class RNN(LayerBase):
                                        outputs_info = self._get_init_state(y_in),
                                        non_sequences = [y_in],
                                        truncate_gradient = -1)
-        return outputs
+        z = outputs.dimshuffle(1,2,3,0)
+        return z
 
     def _get_input(self, x, t):
-        return x[:,:,:,t:t+1]
+        return x[:,:,:,t]
 
     def _one_step(self, t, h_t1, x):
         tmp_x = self._get_input(x, t)
         def _dot(w, x):
-            return T.tensordot(x, w, axes=[[2], [0]])
-        h_t = tanhFunc(_dot(self.W, tmp_x)+_dot(self.H, h_t1)+self.b.dimshuffle('x','x','x',0))
-        h_t = h_t.dimshuffle(0,1,3,2)
+            return T.tensordot(x, w, axes=1)
+        h_t = tanhFunc(_dot(self.W, tmp_x)+_dot(self.H, h_t1)+self.b.dimshuffle('x','x',0))
+#        h_t = h_t.dimshuffle(0,1,3,2)
         return h_t
 
     def _get_init_state(self, x):
-        h_0 = T.zeros((x.shape[0], x.shape[1], self.output_dim, 1), dtype=theano.config.floatX)
+        h_0 = T.zeros((x.shape[0], x.shape[1], self.output_dim), dtype=theano.config.floatX)
         return h_0
 
     def get_params(self):
