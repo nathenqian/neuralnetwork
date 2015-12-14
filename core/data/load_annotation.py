@@ -150,7 +150,7 @@ def main(index):
             # if (i == 2214):
                 # break
     # print "total words number is " + str(word_index) # 6378
-calcWordNumber()
+# calcWordNumber()
 # caffe_net = CaffeNet()
-# for i in range(0, 41):
-    # main(i)
+for i in range(0, 41):
+    main(i)

@@ -147,7 +147,7 @@ class Softmax(LayerBase):
 
     def fprop(self, y_in):
         x = y_in - y_in.max(axis=1, keepdims=True)
-        res = x/T.exp(x).sum(axis=1, keepdims=True)
+        res = T.exp(x)/T.exp(x).sum(axis=1, keepdims=True)
         return res
 
     def cost(self, y_in, y_truth):
@@ -271,7 +271,7 @@ class RNN(LayerBase):
 
     def _fprop(self, y_in):
         outputs, updates = theano.scan(fn = self._one_step,
-                                       sequences = T.arange(y_in.shape[-1]),
+                                       sequences = T.arange(0, y_in.shape[3], 1),
                                        outputs_info = self._get_init_state(y_in),
                                        non_sequences = [y_in],
                                        truncate_gradient = -1)
@@ -332,7 +332,7 @@ class ColumnWiseSoftmax(LayerBase):
 
     def fprop(self, y_in):
         x = y_in - y_in.max(axis=2, keepdims=True)
-        res = x/T.exp(x).sum(axis=2, keepdims=True)
+        res = T.exp(x)/T.exp(x).sum(axis=2, keepdims=True)
         return res
 
     def cost(self, y_in, y_truth):

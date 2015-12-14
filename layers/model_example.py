@@ -37,23 +37,23 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
 
     multimodal_rnn = ColumnWiseFullyConnected(
             input_dim=256,
-            output_dim=512,
+            output_dim=256,
             nonlinearity=reluFunc
         )
 
     multimodal_image = ColumnWiseFullyConnected(
             input_dim=4096,
-            output_dim=512,
+            output_dim=256,
             nonlinearity=reluFunc
     )
 
     multimodal_input = ColumnWiseFullyConnected(
         input_dim=256,
-        output_dim=512,
+        output_dim=256,
         nonlinearity=reluFunc)
 
     fc2 = ColumnWiseFullyConnected(
-        input_dim=512,
+        input_dim=256,
         output_dim=len(word_dictionary),
         nonlinearity=tanhFunc
         )
@@ -63,7 +63,7 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
     embeded1_out = fc0.fprop(x)
     embeded2_out = fc1.fprop(embeded1_out)
     rnn0_out = rnn0.fprop(embeded2_out)
-    return rnn0_out ,rnn0_out , []
+    # return rnn0_out ,rnn0_out , []
     multimodal_rnn_out = multimodal_rnn.fprop(rnn0_out)
     multimodal_image_out = multimodal_image.fprop(image_feature)
     multimodal_input_out = multimodal_input.fprop(embeded2_out)
@@ -111,8 +111,8 @@ if __name__ == '__main__':
     image_feature = T.tensor4()
 
     output, cost, update = local_fprop(data, label, image_feature)
-    train_func = theano.function(inputs=[data, label, image_feature], outputs=[output, cost], updates=update, on_unused_input='warn')
-    test_func = theano.function(inputs=[data, label, image_feature], outputs=[output, cost], on_unused_input='warn')
+    train_func = theano.function(inputs=[data, label, image_feature], outputs=[output, cost], updates=update, on_unused_input='warn', allow_input_downcast=True)
+    test_func = theano.function(inputs=[data, label, image_feature], outputs=[output, cost], on_unused_input='warn', allow_input_downcast=True)
 
     # then start train with function
     while True:
@@ -132,7 +132,8 @@ if __name__ == '__main__':
                     print "train %s data" % (str(index))
                     train_data_sentence, train_data_result, train_data_image_feature = data_generator.calcData()
                     output, cost = train_func(train_data_sentence, train_data_result, train_data_image_feature)
-                    from IPython import embed;embed()                    
+                    print cost
+                    # from IPython import embed;embed()                    
                     data_generator.next()
         else:
             print ">> error command"

@@ -31,12 +31,13 @@ class DataGenerator:
         d = self.data[self.data_index]
         sentence = d["sentence"][0]
         image = np.load(d["image_feature"] + ".npy")
-        
-        input_ = np.random.randn(1, 1, self.word_dictionary_size, len(sentence) + 1) * 0
-        output = np.random.randn(1, 1, self.word_dictionary_size, len(sentence) + 1) * 0
-        image_feature = np.random.randn(1, 1, image.shape[0], len(sentence) + 1) * 0
 
         words = sentence.split(" ")
+        input_ = np.random.randn(1, 1, self.word_dictionary_size, len(words) + 1) * 0
+        output = np.random.randn(1, 1, self.word_dictionary_size, len(words) + 1) * 0
+        image_feature = np.random.randn(1, 1, image.shape[0], len(words) + 1) * 0
+
+        
         for index in range(0, len(words) + 1):
             if index == 0:
                 input_[0, 0, self.word_dictionary_size - 2, index] = 1

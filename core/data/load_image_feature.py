@@ -20,6 +20,7 @@ def main(config_dir):
         if index % 100 == 0:
             print "processing index is %s" % (str(index)) 
         image_dir = i["image_dir"]
+        print image_dir
         image_feature = i["image_feature"]
         npy_ele = caffe_net.processDir(image_dir)
         np.save(image_feature, npy_ele)
