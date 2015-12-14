@@ -21,6 +21,12 @@ def createSentences(str_):
     for i in range(0, len(sentences)):
         sentence = sentences[i]
         sentence = sentence.replace(",", "")
+        sentence = sentence.replace("(", "")
+        sentence = sentence.replace(")", "")
+        sentence = sentence.replace('"', "")
+        sentence = sentence.replace("'", "")
+        sentence = sentence.replace("!", "")
+        sentence = sentence.replace("?", "")
         while sentence[0] == " ":
             sentence = sentence[1:]
         while sentence[-1] == " ":
@@ -34,15 +40,22 @@ def processRead(str_):
     global unit_list, npy_dir
     sentences = createSentences(str_)
     image_dir = createImgDir(str_)
+    error = 0
+    try:
+        f = open(image_dir, "r")
+    except Exception, e:
+        error = 1
+    if error == 1:
+        return
     feature_dir = os.path.join(npy_dir, image_dir.split("/")[-1])[: -3] + "config"
     unit_list.append({"sentence" : sentences, "image_dir" : image_dir, "image_feature" : feature_dir})
-    global word_index, word_dictionary
-    for sentence in sentences:
-        word_list = sentence.split(" ")
-        for i in word_list:
-            if i not in word_dictionary:
-                word_index += 1
-                word_dictionary[i] = word_index
+    
+    # for sentence in sentences:
+    #     word_list = sentence.split(" ")
+    #     for i in word_list:
+    #         if i not in word_dictionary:
+    #             word_index += 1
+    #             word_dictionary[i] = word_index
 
 def getFilesDir(dir_):
     base_files = os.listdir(dir_)
@@ -73,6 +86,31 @@ def calcWordNumber():
         for f in files:
             file_content = readFile(f)
             processRead(file_content)
+
+
+    invalid_list = {}
+    for i in range(0, len(unit_list)):
+        try:
+            s = dumps(unit_list[i], indent = 4)
+        except Exception as e:
+            invalid_list[i] = 1
+    final_list = []
+    for i in range(0, len(unit_list)):
+        if i not in invalid_list:
+            final_list.append(unit_list[i])
+
+    global word_index, word_dictionary
+    for i in final_list:
+        for sentence in i["sentence"]:
+            word_list = sentence.split(" ")
+            for i in word_list:
+                if i not in word_dictionary:
+                    word_index += 1
+                    word_dictionary[i] = word_index
+
+    with open("/Users/nathenqian/Documents/code/nueral/iaprtc12/word_dictionary.txt", "w") as f:
+        f.write(dumps(word_dictionary, indent = 4))
+
     print "total words number is " + str(word_index) # 6378
 
 def main(index):
@@ -112,7 +150,7 @@ def main(index):
             # if (i == 2214):
                 # break
     # print "total words number is " + str(word_index) # 6378
-# calcWordNumber()
+calcWordNumber()
 # caffe_net = CaffeNet()
-for i in range(0, 41):
-    main(i)
+# for i in range(0, 41):
+    # main(i)

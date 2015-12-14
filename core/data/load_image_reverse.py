@@ -4,7 +4,7 @@ from json import dumps, loads
 sys.path.append("/Users/nathenqian/Documents/code/nueral/caffe")
 from caffe_net import CaffeNet
 import numpy as np
-
+from time import sleep
 base_dir = "/Users/nathenqian/Documents/code/nueral/iaprtc12/annotations_complete_eng"
 npy_dir = "/Users/nathenqian/Documents/code/nueral/iaprtc12/image_npy"
 
@@ -23,13 +23,13 @@ def main(config_dir):
         image_feature = i["image_feature"]
         npy_ele = caffe_net.processDir(image_dir)
         np.save(image_feature, npy_ele)
-
+        sleep(10)
 
 
     # print "total words number is " + str(word_index) # 6378
 # calcWordNumber()
 caffe_net = CaffeNet()
-for i in range(8, 41):
+for i in range(40, 0, -1):
     if i < 10:
         ind = "0" + str(i)
     else:

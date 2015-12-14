@@ -18,6 +18,9 @@ def sigmoidFunc(x):
 def tanhFunc(x):
     return T.tanh(x)
 
+def specialTanhFunc(x):
+    return 1.7159 * T.tanh(2 * x / 3.0)
+
 def reluFunc(x):
     return T.maximum(x, 0.)
 
@@ -254,14 +257,17 @@ class RNN(LayerBase):
     H = None
     b = None
 
-    def __init__(self, input_dim, output_dim, **kwargs):
+    def __init__(self, input_dim, output_dim, nonlinearity = tanhFunc, **kwargs):
         super(RNN, self).__init__(**kwargs)
         self.input_dim = input_dim
         self.output_dim = output_dim
-        
+
         self.W = self.init_weights((input_dim, output_dim))
         self.H = self.init_weights((output_dim, output_dim))
         self.b = self.init_weights((output_dim,))
+        
+        self.nonlinearity = nonlinearity
+        
 
     def _fprop(self, y_in):
         outputs, updates = theano.scan(fn = self._one_step,
@@ -279,7 +285,7 @@ class RNN(LayerBase):
         tmp_x = self._get_input(x, t)
         def _dot(w, x):
             return T.tensordot(x, w, axes=1)
-        h_t = tanhFunc(_dot(self.W, tmp_x)+_dot(self.H, h_t1)+self.b.dimshuffle('x','x',0))
+        h_t = self.nonlinearity(_dot(self.W, tmp_x)+_dot(self.H, h_t1)+self.b.dimshuffle('x','x',0))
 #        h_t = h_t.dimshuffle(0,1,3,2)
         return h_t
 
