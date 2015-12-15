@@ -28,15 +28,15 @@ class CaffeNet:
             im_input[i, :, :, :] = np.asarray(im.resize((224, 224))).swapaxes(1, 2).swapaxes(0, 1) # / 256.0
 
             temp = np.copy(im_input[i, 0, :, :])
-            im_input[i, 0, :, :] -= 103.939
-            im_input[i, 1, :, :] -= 116.779
-            im_input[i, 2, :, :] -= 123.68
+            # im_input[i, 0, :, :] -= 103.939
+            # im_input[i, 1, :, :] -= 116.779
+            # im_input[i, 2, :, :] -= 123.68
             # im_input[i, 0, :, :] -= 123.68
             # im_input[i, 1, :, :] -= 116.779
             # im_input[i, 2, :, :] -= 103.939
-            # im_input[i, 0, :, :] = np.copy(im_input[i, 2, :, :]) - 103.939
-            # im_input[i, 1, :, :] -= 116.779
-            # im_input[i, 2, :, :] = temp - 123.68
+            im_input[i, 0, :, :] = np.copy(im_input[i, 2, :, :]) - 103.939
+            im_input[i, 1, :, :] -= 116.779
+            im_input[i, 2, :, :] = temp - 123.68
 
             i += 1
         print im_input

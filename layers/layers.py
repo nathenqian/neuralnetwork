@@ -36,7 +36,7 @@ class LayerBase(object):
     def __init__(self, **kwargs):
         super(LayerBase, self).__init__(**kwargs)
         self.learning_rate = 0.01
-        self.weight_decay = 0.
+        self.weight_decay = 0.001
         self.dropout_prob = None
         if 'learning_rate' in kwargs:
             self.learning_rate = kwargs['learning_rate']

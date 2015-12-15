@@ -65,16 +65,17 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
     rnn0_out = rnn0.fprop(embeded2_out)
     # return rnn0_out ,rnn0_out , []
     multimodal_rnn_out = multimodal_rnn.fprop(rnn0_out)
-    # multimodal_image_out = multimodal_image.fprop(image_feature)
+    multimodal_image_out = multimodal_image.fprop(image_feature)
     multimodal_input_out = multimodal_input.fprop(embeded2_out)
-    multimodal_out = multimodal_rnn_out + multimodal_input_out # + multimodal_image_out
+    multimodal_out = multimodal_rnn_out + multimodal_input_out + multimodal_image_out
     softmax_in = fc2.fprop(multimodal_out)
     my_out = softmax.fprop(softmax_in)
     # my_cost = softmax.cost(t3, y_truth)
 
     def _local_cost(y, y_truth):
         tmp = y * y_truth
-        tmp = T.log(tmp.sum(axis=2)).mean(axis=2).mean()
+        # tmp = T.log(tmp.sum(axis=2)).mean(axis=2).mean()
+        tmp = T.log(tmp.max(axis=2)).sum(axis=2).mean()
         tmp = -tmp
         return tmp
 
@@ -82,7 +83,7 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
 
     my_update = []
     layers = [fc0, fc1, fc2, multimodal_rnn, multimodal_input, rnn0, softmax,
-        # multimodal_image
+        multimodal_image
     ]
     momemtum = 0.9
     for layer in layers:
