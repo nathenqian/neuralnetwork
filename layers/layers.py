@@ -5,7 +5,7 @@ from theano.tensor.shared_randomstreams import RandomStreams
 import numpy as np
 import scipy.io
 import time
-
+import cPickle 
 srng = RandomStreams(seed=10001)
 
 def identityFunc(x):
@@ -34,7 +34,7 @@ class LayerBase(object):
     dropout_prob = None
 
     def __init__(self, **kwargs):
-        super(LayerBase, self).__init__(**kwargs)
+        super(LayerBase, self).__init__()
         self.learning_rate = 0.01
         self.weight_decay = 0.001
         self.dropout_prob = None
@@ -44,6 +44,7 @@ class LayerBase(object):
             self.weight_decay = kwargs['weight_decay']
         if 'dropout_prob' in kwargs:
             self.dropout_prob = kwargs['dropout_prob']
+        self.name = kwargs["name"]
 
     def init_weights(self, shape, init_std=0.1):
         return theano.shared(floatX(np.random.randn(*shape) * init_std))
@@ -57,7 +58,7 @@ class LayerBase(object):
         return self._fprop(y_in)
 
     def get_params(self):
-        pass
+        return []
 
     def _dropout_input(self, x, p=0.):
         if p > 0:
@@ -66,6 +67,22 @@ class LayerBase(object):
                                 dtype=theano.config.floatX())
             x /= retain_prob
         return x
+
+    def save_data(self, tempname):
+        params = self.get_params()
+        index = 0
+        for i in params:
+            save_file = open(self.name + "_" + str(index) + "_" + tempname, 'wb')  # this will overwrite current contents                     
+            cPickle.dump(i.get_value(borrow=True), save_file, -1)  # the -1 is for HIGHEST_PROTOCOL  
+            save_file.close()
+            index += 1
+    def load_data(self, tempname):
+        params = self.get_params()
+        index = 0
+        for i in params:
+            load_file = open(self.name + "_" + str(index) + "_" + tempname, 'rb')  # this will overwrite current contents           
+            i.set_value(cPickle.load(load_file), borrow=True)
+            index += 1
 
 
 class FullyConnected(LayerBase):

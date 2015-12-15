@@ -20,45 +20,55 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
     fc0 = ColumnWiseFullyConnected(
             input_dim=len(word_dictionary),
             output_dim=128,
-            nonlinearity=reluFunc
+            nonlinearity=reluFunc,
+            name = "fc0"
         )
 
     fc1 = ColumnWiseFullyConnected(
         input_dim=128,
         output_dim=256,
-        nonlinearity=reluFunc
+        nonlinearity=reluFunc,
+        name = "fc1"
         )
 
     rnn0 = LSTM(
             input_dim=256,
-            output_dim=256
+            output_dim=256,
             # ,nonlinearity=reluFunc
+            name = "lstm0"
             )
 
     multimodal_rnn = ColumnWiseFullyConnected(
             input_dim=256,
             output_dim=256,
-            nonlinearity=reluFunc
+            nonlinearity=reluFunc,
+            name = "multimodal_rnn"
         )
 
     multimodal_image = ColumnWiseFullyConnected(
             input_dim=4096,
             output_dim=256,
-            nonlinearity=reluFunc
+            nonlinearity=reluFunc,
+            name = "multimodal_image"
     )
 
     multimodal_input = ColumnWiseFullyConnected(
         input_dim=256,
         output_dim=256,
-        nonlinearity=reluFunc)
+        nonlinearity=reluFunc,
+        name = "multimodal_input"
+    )
 
     fc2 = ColumnWiseFullyConnected(
         input_dim=256,
         output_dim=len(word_dictionary),
-        nonlinearity=specialTanhFunc
+        nonlinearity=specialTanhFunc,
+        name = "fc2"
         )
 
-    softmax = ColumnWiseSoftmax()
+    softmax = ColumnWiseSoftmax(
+        name = "softmax"
+    )
 
     embeded1_out = fc0.fprop(x)
     embeded2_out = fc1.fprop(embeded1_out)
@@ -96,7 +106,7 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
             # my_update.append((p, p+p_delta*momemtum-lr*(g+wd*p)))
             # my_update.append((p_delta, p_delta*momemtum-lr*(g+wd*p)))
 
-    return my_out, my_cost, my_update
+    return my_out, my_cost, my_update, layers
 
 
 def readDataFile(base_dir):
@@ -114,7 +124,7 @@ if __name__ == '__main__':
     label = T.tensor4()
     image_feature = T.tensor4()
 
-    output, cost, update = local_fprop(data, label, image_feature)
+    output, cost, update, layers = local_fprop(data, label, image_feature)
     train_func = theano.function(inputs=[data, label, image_feature], outputs=[output, cost], updates=update, on_unused_input='warn', allow_input_downcast=True)
     test_func = theano.function(inputs=[data, label, image_feature], outputs=[output, cost], on_unused_input='warn', allow_input_downcast=True)
 
@@ -147,5 +157,15 @@ if __name__ == '__main__':
                         break
         elif command == "shuffle":
             data_generator.shuffle()
+        elif command == "save":
+            print ">> enter name of this data"
+            temp_name = raw_input()
+            for layer in layers:
+                layer.save_data(temp_name)
+        elif command == "load":
+            print ">> enter name of this data"
+            temp_name = raw_input()
+            for layer in layers:
+                layer.load_data(temp_name)
         else:
-            print ">> error command"
+            print ">> error"
