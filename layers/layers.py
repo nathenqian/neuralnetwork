@@ -35,7 +35,7 @@ class LayerBase(object):
 
     def __init__(self, **kwargs):
         super(LayerBase, self).__init__(**kwargs)
-        self.learning_rate = 0.0005
+        self.learning_rate = 0.01
         self.weight_decay = 0.
         self.dropout_prob = None
         if 'learning_rate' in kwargs:
@@ -45,7 +45,7 @@ class LayerBase(object):
         if 'dropout_prob' in kwargs:
             self.dropout_prob = kwargs['dropout_prob']
 
-    def init_weights(self, shape, init_std=0.01):
+    def init_weights(self, shape, init_std=0.1):
         return theano.shared(floatX(np.random.randn(*shape) * init_std))
 
     def _fprop(self, y_in):
@@ -217,8 +217,8 @@ class LSTM(LayerBase):
 
     def _fprop(self, y_in):
         outputs, updates = theano.scan(fn = self._one_step,
-                                       sequences = T.arange(y_in.shape[-1]),
-                                       outputs_info = self._get_init_state(x),
+                                       sequences = T.arange(0, y_in.shape[3], 1),
+                                       outputs_info = self._get_init_state(y_in),
                                        non_sequences = [y_in],
                                        truncate_gradient = -1)
         z = outputs[0].dimshuffle(1,2,3,0)
@@ -240,8 +240,8 @@ class LSTM(LayerBase):
         return h_t, c_t
 
     def _get_init_state(self, x):
-        h_0 = T.zeros((x.shape[0], x.shape[1], self.output_dim), dtype=theano.config.floatX())
-        c_0 = T.zeros((x.shape[0], x.shape[1], self.output_dim), dtype=theano.config.floatX())
+        h_0 = T.zeros((x.shape[0], x.shape[1], self.output_dim), dtype=theano.config.floatX)
+        c_0 = T.zeros((x.shape[0], x.shape[1], self.output_dim), dtype=theano.config.floatX)
         return h_0, c_0
 
     def get_params(self):

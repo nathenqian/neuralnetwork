@@ -20,19 +20,19 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
     fc0 = ColumnWiseFullyConnected(
             input_dim=len(word_dictionary),
             output_dim=128,
-            nonlinearity=tanhFunc
+            nonlinearity=reluFunc
         )
 
     fc1 = ColumnWiseFullyConnected(
         input_dim=128,
         output_dim=256,
-        nonlinearity=tanhFunc
+        nonlinearity=reluFunc
         )
 
-    rnn0 = RNN(
+    rnn0 = LSTM(
             input_dim=256,
-            output_dim=256,
-            nonlinearity=reluFunc
+            output_dim=256
+            # ,nonlinearity=reluFunc
             )
 
     multimodal_rnn = ColumnWiseFullyConnected(
@@ -55,7 +55,7 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
     fc2 = ColumnWiseFullyConnected(
         input_dim=256,
         output_dim=len(word_dictionary),
-        nonlinearity=tanhFunc
+        nonlinearity=specialTanhFunc
         )
 
     softmax = ColumnWiseSoftmax()
@@ -65,9 +65,9 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
     rnn0_out = rnn0.fprop(embeded2_out)
     # return rnn0_out ,rnn0_out , []
     multimodal_rnn_out = multimodal_rnn.fprop(rnn0_out)
-    multimodal_image_out = multimodal_image.fprop(image_feature)
+    # multimodal_image_out = multimodal_image.fprop(image_feature)
     multimodal_input_out = multimodal_input.fprop(embeded2_out)
-    multimodal_out = multimodal_rnn_out + multimodal_image_out + multimodal_input_out
+    multimodal_out = multimodal_rnn_out + multimodal_input_out # + multimodal_image_out
     softmax_in = fc2.fprop(multimodal_out)
     my_out = softmax.fprop(softmax_in)
     # my_cost = softmax.cost(t3, y_truth)
@@ -81,7 +81,9 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
     my_cost = _local_cost(my_out, y_truth)
 
     my_update = []
-    layers = [fc0, fc1, fc2, multimodal_rnn, multimodal_image, multimodal_input, rnn0, softmax]
+    layers = [fc0, fc1, fc2, multimodal_rnn, multimodal_input, rnn0, softmax,
+        # multimodal_image
+    ]
     momemtum = 0.9
     for layer in layers:
         for p in layer.get_params():
@@ -89,8 +91,9 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
             wd = layer.weight_decay
             g = T.grad(cost=my_cost, wrt=p)
             p_delta = theano.shared(floatX(np.zeros(p.get_value().shape)))
-            my_update.append((p, p+p_delta*momemtum-lr*(g+wd*p)))
-            my_update.append((p_delta, p_delta*momemtum-lr*(g+wd*p)))
+            my_update.append((p, p-lr*(g+wd*p)))
+            # my_update.append((p, p+p_delta*momemtum-lr*(g+wd*p)))
+            # my_update.append((p_delta, p_delta*momemtum-lr*(g+wd*p)))
 
     return my_out, my_cost, my_update
 
@@ -122,6 +125,8 @@ if __name__ == '__main__':
         if command == "t":
             print ">> enter time"
             t = int(raw_input())
+            print ">> enter words number"
+            cnt = int(raw_input())
             while t > 0:
                 t -= 1
                 data_generator.resetData()
@@ -133,7 +138,13 @@ if __name__ == '__main__':
                     train_data_sentence, train_data_result, train_data_image_feature = data_generator.calcData()
                     output, cost = train_func(train_data_sentence, train_data_result, train_data_image_feature)
                     print cost
+                    print data_generator.translate(output)
+                    print data_generator.translate(train_data_sentence)
                     # from IPython import embed;embed()                    
                     data_generator.next()
+                    if index == cnt:
+                        break
+        elif command == "shuffle":
+            data_generator.shuffle()
         else:
             print ">> error command"
