@@ -7,6 +7,11 @@ class DataGenerator:
     def __init__(self, dir_, dictionary, img_path):
         with open(dir_, "r") as f:
             self.data = loads(f.read())
+        temp = []
+        for item in self.data:
+            if len(item["sentence"]) != 0:
+                temp.append(item)
+        self.data = temp
         self.img_path = img_path
         self.data_index = 0
         self.word_dictionary_size = len(dictionary)
