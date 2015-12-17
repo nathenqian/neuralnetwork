@@ -72,7 +72,7 @@ class LayerBase(object):
         params = self.get_params()
         index = 0
         for i in params:
-            save_file = open(self.name + "_" + str(index) + "_" + tempname, 'wb')  # this will overwrite current contents                     
+            save_file = open(tempname + "_" + self.name + "_" + str(index), 'wb')  # this will overwrite current contents                     
             cPickle.dump(i.get_value(borrow=True), save_file, -1)  # the -1 is for HIGHEST_PROTOCOL  
             save_file.close()
             index += 1
@@ -80,7 +80,7 @@ class LayerBase(object):
         params = self.get_params()
         index = 0
         for i in params:
-            load_file = open(self.name + "_" + str(index) + "_" + tempname, 'rb')  # this will overwrite current contents           
+            load_file = open(tempname + "_" + self.name + "_" + str(index), 'rb')  # this will overwrite current contents           
             i.set_value(cPickle.load(load_file), borrow=True)
             index += 1
 

@@ -113,12 +113,12 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
 def readDataFile(base_dir):
     with open(os.path.join(base_dir, "word_dictionary.txt"), "r") as f:
         word_dictionary = loads(f.read())
-    data_generator = DatasetSimple(os.path.join(base_dir, "config_all.conf"), word_dictionary, '/home/ckl/git/data/')
+    data_generator = DatasetSimple(os.path.join(base_dir, "config_all.conf"), word_dictionary, base_dir)
     return word_dictionary, data_generator
 
 
 if __name__ == '__main__':
-    base_dir = "../../data"
+    base_dir = "../local_data"
     word_dictionary, data_generator = readDataFile(base_dir)
 #    from IPython import embed;embed()
     print "the size of dictionary is  " + str(len(word_dictionary))
@@ -133,15 +133,23 @@ if __name__ == '__main__':
             on_unused_input='warn', allow_input_downcast=True)
 
     # then start train with function
+    command = 'svae'
     while True:
         print ">> enter command"
         print ">> "
-        command = raw_input()
+#        command = raw_input()
+        if command == 'save':
+            command = 't'
+        else:
+            command = 'save'
+
         if command == "t":
             print ">> enter time"
-            t = int(raw_input())
+#            t = int(raw_input())
+            t = 1
             print ">> enter words number"
-            cnt = int(raw_input())
+#            cnt = int(raw_input())
+            cnt = 0
             while t > 0:
                 t -= 1
                 data_generator.resetData()
@@ -165,7 +173,8 @@ if __name__ == '__main__':
             data_generator.shuffle()
         elif command == "save":
             print ">> enter name of this data"
-            temp_name = raw_input()
+#            temp_name = raw_input()
+            temp_name = 'log/model_v1'
             for layer in layers:
                 layer.save_data(temp_name)
         elif command == "load":
