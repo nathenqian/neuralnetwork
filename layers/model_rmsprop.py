@@ -106,16 +106,20 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
         multimodal_image
     ]
 
-#    momemtum = 0.9
+    # RMSprop
+    rho = 0.9
+    epision = 1e-6
     for layer in layers:
         for p in layer.get_params():
             lr = layer.learning_rate
             wd = layer.weight_decay
             g = T.grad(cost=my_cost, wrt=p)
-            p_delta = theano.shared(floatX(np.zeros(p.get_value().shape)))
-            my_update.append((p, p-lr*(g+wd*p)))
-            # my_update.append((p, p+p_delta*momemtum-lr*(g+wd*p)))
-            # my_update.append((p_delta, p_delta*momemtum-lr*(g+wd*p)))
+            p_delta = theano.shared(p.get_value() * 0.)
+            p_delta_new = rho * p_delta + (1 - rho) * g**2;
+            gradient_scaling = T.sqrt(p_delta_new + epision)
+            g = g / gradient_scaling
+            my_update.append((p_delta, p_delta_new))
+            my_update.append((p, p * (1 - wd) - lr * g))
 
     return my_out, my_cost, my_update, layers
 
@@ -153,16 +157,11 @@ if __name__ == '__main__':
     while True:
         print ">> enter command"
         print ">> "
-#        command = raw_input()
-        if command == 'save':
-            command = 't'
-        else:
-            command = 'save'
-
+        command = raw_input()
         if command == "t":
             print ">> enter time"
-#            t = int(raw_input())
-            t = 1
+            t = int(raw_input())
+#            t = 1
             print ">> enter words number"
 #            cnt = int(raw_input())
             cnt = 0
@@ -190,12 +189,15 @@ if __name__ == '__main__':
                     if index == cnt:
                         break
                 print 'total cost = {}'.format(sum(cost_set)/len(cost_set))
+                # save after trained
+                temp_name = 'train_log_rmsprop/model_rmsprop'
+                for layer in layers:
+                    layer.save_data(temp_name)
         elif command == "shuffle":
             data_generator.shuffle()
         elif command == "save":
             print ">> enter name of this data"
-#            temp_name = raw_input()
-            temp_name = 'log/model_v1'
+            temp_name = raw_input()
             for layer in layers:
                 layer.save_data(temp_name)
         elif command == "load":
