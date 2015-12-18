@@ -24,7 +24,7 @@ class CaffeNet:
         for single in dir_:
             im = Image.open(single)
             # for i in range(0, 10):
-            print single, i
+            # print single, i
             im_input[i, :, :, :] = np.asarray(im.resize((224, 224))).swapaxes(1, 2).swapaxes(0, 1) # / 256.0
 
             temp = np.copy(im_input[i, 0, :, :])
@@ -39,32 +39,32 @@ class CaffeNet:
             im_input[i, 2, :, :] = temp - 123.68
 
             i += 1
-        print im_input
+        # print im_input
         # print im_input[0, 0, 222, 2]
         # print im_input[0, 1, 222, 2]
         # print im_input[0, 2, 222, 2]
         self.net.blobs['data'].data[...] = im_input
         self.net.forward()
-        # return self.net.blobs["fc7"].data
-        return self.net.blobs["prob"].data
+        return self.net.blobs["fc7"].data
+        # return self.net.blobs["prob"].data
 
 
-caffe_net = CaffeNet()
-l = [
-    "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/37/37089.jpg", 
-    "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/37/37090.jpg",
-    "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/10/10005.jpg",
-    "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/10/10006.jpg",
-    "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/10/10008.jpg",
-    "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/37/37066.jpg",
-    "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/37/37066.jpg",
-    "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/37/37069.jpg",
-    "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/37/37070.jpg"
-]
-a = caffe_net.processDir(l)
-print a
-print np.max(a, axis = 1)
-print np.argmax(a, axis = 1)
+# caffe_net = CaffeNet()
+# l = [
+#     "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/10/10008.jpg",
+#     "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/37/37089.jpg", 
+#     "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/37/37090.jpg",
+#     "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/10/10005.jpg",
+#     "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/10/10006.jpg",
+#     "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/37/37066.jpg",
+#     "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/37/37066.jpg",
+#     "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/37/37069.jpg",
+#     "/Users/nathenqian/Documents/code/nueral/iaprtc12/images/37/37070.jpg"
+# ]
+# a = caffe_net.processDir(l)
+# print a
+# print np.max(a, axis = 1)
+# print np.argmax(a, axis = 1)
 
 # print caffe_net.processDir("/Users/nathenqian/Documents/code/nueral/iaprtc12/images/01/1037.jpg")
 

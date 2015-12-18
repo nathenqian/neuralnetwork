@@ -20,42 +20,47 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
     fc0 = ColumnWiseFullyConnected(
             input_dim=len(word_dictionary),
             output_dim=128,
-            nonlinearity=reluFunc,
+            nonlinearity=tanhFunc,
+            dropout_prob=0.2,
             name = "fc0"
         )
 
     fc1 = ColumnWiseFullyConnected(
         input_dim=128,
         output_dim=256,
-        nonlinearity=reluFunc,
+        nonlinearity=tanhFunc,
+        dropout_prob=0.2,
         name = "fc1"
         )
 
     rnn0 = LSTM(
             input_dim=256,
             output_dim=256,
-            # ,nonlinearity=reluFunc
+            # ,nonlinearity=tanhFunc
             name = "lstm0"
             )
 
     multimodal_rnn = ColumnWiseFullyConnected(
             input_dim=256,
             output_dim=256,
-            nonlinearity=reluFunc,
+            nonlinearity=tanhFunc,
+            dropout_prob=0.2,
             name = "multimodal_rnn"
         )
 
     multimodal_image = ColumnWiseFullyConnected(
             input_dim=4096,
             output_dim=256,
-            nonlinearity=reluFunc,
+            nonlinearity=tanhFunc,
+            dropout_prob=0.2,
             name = "multimodal_image"
     )
 
     multimodal_input = ColumnWiseFullyConnected(
         input_dim=256,
         output_dim=256,
-        nonlinearity=reluFunc,
+        nonlinearity=tanhFunc,
+        dropout_prob=0.2,
         name = "multimodal_input"
     )
 
@@ -63,6 +68,7 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
         input_dim=256,
         output_dim=len(word_dictionary),
         nonlinearity=specialTanhFunc,
+        dropout_prob=0.2,
         name = "fc2"
         )
 
@@ -112,7 +118,8 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
 def readDataFile(base_dir):
     with open(os.path.join(base_dir, "word_dictionary.txt"), "r") as f:
         word_dictionary = loads(f.read())
-    data_generator = DataGenerator(os.path.join(base_dir, "data_config_00.conf"), word_dictionary)
+    data_generator = DataGenerator(os.path.join(base_dir, "data.conf"), word_dictionary, "/Users/nathenqian/Documents/code/nueral/iaprtc12/image_npy")
+    print "data_size is " + str(len(data_generator.data))
     return word_dictionary, data_generator
 
 
@@ -149,8 +156,9 @@ if __name__ == '__main__':
                     train_data_sentence, train_data_result, train_data_image_feature = data_generator.calcData()
                     output, cost = train_func(train_data_sentence, train_data_result, train_data_image_feature)
                     print cost
-                    print data_generator.translate(output)
-                    print data_generator.translate(train_data_sentence)
+                    # print data_generator.translate(output)
+                    print data_generator.showProb(output, train_data_sentence)
+                    # print data_generator.translate(train_data_sentence)
                     # from IPython import embed;embed()                    
                     data_generator.next()
                     if index == cnt:
@@ -167,5 +175,11 @@ if __name__ == '__main__':
             temp_name = raw_input()
             for layer in layers:
                 layer.load_data(temp_name)
+        elif command == "ls":
+            print ">> enter size"
+            temp_name = int(raw_input())
+            print data_generator.list(temp_name)
+        elif command == "sort":
+            data_generator.sortBySentenceLength()
         else:
             print ">> error"
