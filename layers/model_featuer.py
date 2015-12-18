@@ -6,7 +6,7 @@ from json import loads, dumps
 import sys
 import os
 sys.path.append("/Users/nathenqian/Documents/code/nueral/core")
-from data.data import DataGenerator
+from data.data import DataGenerator, DataGeneratorFeature
 from time import localtime
 def printTime():
     t = localtime()
@@ -14,55 +14,42 @@ def printTime():
 
 word_dictionary, data_generator = (None, None)
 
-def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
+def local_fprop(image_feature, y_truth): # x = sentences  y_truth is [[][]]
     global word_dictionary
 
-    fc0 = ColumnWiseFullyConnected(
-            input_dim=len(word_dictionary),
-            output_dim=128,
-            nonlinearity=tanhFunc,
-            dropout_prob=0.2,
-            name = "fc0"
-        )
+    # fc0 = ColumnWiseFullyConnected(
+    #         input_dim=len(word_dictionary),
+    #         output_dim=512,
+    #         nonlinearity=tanhFunc,
+    #         # dropout_prob=0.2,
+    #         name = "fc0"
+    #     )
 
-    fc1 = ColumnWiseFullyConnected(
-        input_dim=128,
-        output_dim=256,
-        nonlinearity=tanhFunc,
-        dropout_prob=0.2,
-        name = "fc1"
-        )
+    # fc1 = ColumnWiseFullyConnected(
+    #     input_dim=512,
+    #     output_dim=256,
+    #     nonlinearity=tanhFunc,
+    #     # dropout_prob=0.2,
+    #     name = "fc1"
+    #     )
 
-    rnn0 = LSTM(
-            input_dim=256,
-            output_dim=256,
-            # ,nonlinearity=tanhFunc
-            name = "lstm0"
-            )
-
-    multimodal_rnn = ColumnWiseFullyConnected(
-            input_dim=256,
-            output_dim=256,
-            nonlinearity=tanhFunc,
-            dropout_prob=0.2,
-            name = "multimodal_rnn"
-        )
 
     multimodal_image = ColumnWiseFullyConnected(
             input_dim=4096,
-            output_dim=256,
+            output_dim=1024,
             nonlinearity=tanhFunc,
             dropout_prob=0.2,
             name = "multimodal_image"
     )
 
-    multimodal_input = ColumnWiseFullyConnected(
-        input_dim=256,
-        output_dim=256,
-        nonlinearity=tanhFunc,
-        dropout_prob=0.2,
-        name = "multimodal_input"
+    multimodal_image2 = ColumnWiseFullyConnected(
+            input_dim=1024,
+            output_dim=256,
+            nonlinearity=tanhFunc,
+            dropout_prob=0.2,
+            name = "multimodal_image2"
     )
+
 
     fc2 = ColumnWiseFullyConnected(
         input_dim=256,
@@ -72,20 +59,18 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
         name = "fc2"
         )
 
-    softmax = ColumnWiseSoftmax(
-        name = "softmax"
+    euc0 = EuclideanLoss(
+        name = "euc"
     )
 
-    embeded1_out = fc0.fprop(x)
-    embeded2_out = fc1.fprop(embeded1_out)
-    rnn0_out = rnn0.fprop(embeded2_out)
-    # return rnn0_out ,rnn0_out , []
-    multimodal_rnn_out = multimodal_rnn.fprop(rnn0_out)
+
+    # embeded1_out = fc0.fprop(x)
+    # embeded2_out = fc1.fprop(embeded1_out)
     multimodal_image_out = multimodal_image.fprop(image_feature)
-    multimodal_input_out = multimodal_input.fprop(embeded2_out)
-    multimodal_out = multimodal_rnn_out + multimodal_input_out + multimodal_image_out
-    softmax_in = fc2.fprop(multimodal_out)
-    my_out = softmax.fprop(softmax_in)
+    multimodal_image_out2 = multimodal_image2.fprop(multimodal_image_out)
+    # multimodal_out = embeded2_out + multimodal_image_out
+    my_out = fc2.fprop(multimodal_image_out2)
+
     # my_cost = softmax.cost(t3, y_truth)
 
     def _local_cost(y, y_truth):
@@ -95,12 +80,10 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
         tmp = -tmp
         return tmp
 
-    my_cost = _local_cost(my_out, y_truth)
+    my_cost = euc0.cost(my_out, y_truth)
 
     my_update = []
-    layers = [fc0, fc1, fc2, multimodal_rnn, multimodal_input, rnn0, softmax,
-        multimodal_image
-    ]
+    layers = [fc2, multimodal_image, multimodal_image2]
     momemtum = 0.9
     for layer in layers:
         for p in layer.get_params():
@@ -118,7 +101,7 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
 def readDataFile(base_dir):
     with open(os.path.join(base_dir, "word_dictionary.txt"), "r") as f:
         word_dictionary = loads(f.read())
-    data_generator = DataGenerator(os.path.join(base_dir, "data.conf"), word_dictionary, "/Users/nathenqian/Documents/code/nueral/iaprtc12/image_npy")
+    data_generator = DataGeneratorFeature(os.path.join(base_dir, "data.conf"), word_dictionary, "/Users/nathenqian/Documents/code/nueral/iaprtc12/image_npy")
     print "data_size is " + str(len(data_generator.data))
     return word_dictionary, data_generator
 
@@ -127,13 +110,13 @@ if __name__ == '__main__':
     base_dir = "/Users/nathenqian/Documents/code/nueral/iaprtc12"
     word_dictionary, data_generator = readDataFile(base_dir)
     print "the size of dictionary is  " + str(len(word_dictionary))
-    data = T.tensor4()
+
     label = T.tensor4()
     image_feature = T.tensor4()
 
-    output, cost, update, layers = local_fprop(data, label, image_feature)
-    train_func = theano.function(inputs=[data, label, image_feature], outputs=[output, cost], updates=update, on_unused_input='warn', allow_input_downcast=True)
-    test_func = theano.function(inputs=[data, label, image_feature], outputs=[output, cost], on_unused_input='warn', allow_input_downcast=True)
+    output, cost, update, layers = local_fprop(label, image_feature)
+    train_func = theano.function(inputs=[label, image_feature], outputs=[output, cost], updates=update, on_unused_input='warn', allow_input_downcast=True)
+    test_func = theano.function(inputs=[label, image_feature], outputs=[output, cost], on_unused_input='warn', allow_input_downcast=True)
 
     # then start train with function
     while True:
@@ -153,11 +136,11 @@ if __name__ == '__main__':
                 while data_generator.hasNext() == True:
                     index += 1
                     print "train %s data" % (str(index))
-                    train_data_sentence, train_data_result, train_data_image_feature = data_generator.calcData()
-                    output, cost = train_func(train_data_sentence, train_data_result, train_data_image_feature)
+                    train_data_result, train_data_image_feature = data_generator.calcData()
+                    output, cost = train_func(train_data_image_feature, train_data_result)
                     print cost
                     # print data_generator.translate(output)
-                    print data_generator.showProb(output, train_data_sentence)
+                    # print data_generator.showProb(output, train_data_result)
                     # print data_generator.translate(train_data_sentence)
                     # from IPython import embed;embed()                    
                     data_generator.next()

@@ -67,6 +67,7 @@ class DataGenerator:
             image_feature[0, 0, :, index] = image
 
         return (input_, output, image_feature)
+
     def translate(self, output):
         ret = ""
         for i in range(output.shape[3]):
@@ -75,11 +76,31 @@ class DataGenerator:
             ret = ret + " " + self.rev_dictionary[n + 1]
         return ret
 
+    def list(self, cnt):
+        cnt = min(len(self.data), cnt)
+        if cnt == -1:
+            cnt = len(self.data)
+        ret = []
+        for i in range(0, cnt):
+            ret.append(self.data[i]["sentence"][0])
+        return ret
+
+    def sortBySentenceLength(self):
+        self.data = sorted(self.data, key = lambda a : len(a["sentence"][0]))
 
     # def createTestBatch(self, batch_size):
     #     for index in range(0, batch_size):
     #         if self.hasNext():
     #             self.next()
+    def showProb(self, output, correct):
+        ret = ""
+        ret_corr = ""
+        for i in range(output.shape[3]):
+            print np.max(output[0, 0, :, i], axis = 0), output[0, 0, np.argmax(correct[0, 0, :, i], axis = 0), i]
+            n = np.argmax(output[0, 0, :, i], axis = 0)
+            ret = ret + " " + self.rev_dictionary[n + 1]
+            ret_corr = ret_corr + " " + self.rev_dictionary[np.argmax(correct[0, 0, :, i], axis = 0) + 1]
+        return ret + "\n" + ret_corr
 
 english_char = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
@@ -127,3 +148,22 @@ class DatasetSimple(DataGenerator):
 #        if len(words) > 10:
 #            return None
         return words
+
+class DataGeneratorFeature(DataGenerator):
+    def calcData(self):
+        d = self.data[self.data_index]
+        sentence = d['sentence'][0]
+        fpath = os.path.join(self.img_path, d['image_feature'].split('/')[-1])
+        image = np.load(fpath + ".npy")
+
+        words = sentence.split(" ")
+        # words = words[1:]
+        output = np.random.randn(1, 1, self.word_dictionary_size, 1) * 0
+        image_feature = np.random.randn(1, 1, 4096, 1) * 0
+        image_feature[0, 0, :, 0] = image
+
+        for index in range(0, len(words)):
+            output[0, 0, self.dictionary[words[index]] - 1, 0] = 1
+
+
+        return (output, image_feature)
