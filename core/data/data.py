@@ -165,5 +165,26 @@ class DataGeneratorFeature(DataGenerator):
         for index in range(0, len(words)):
             output[0, 0, self.dictionary[words[index]] - 1, 0] = 1
 
-
         return (output, image_feature)
+
+
+    def calcBatchData(self, batch_size):
+        data_index_bak = self.data_index
+        cnt = min(batch_size, len(self.data) - self.data_index)
+
+        ret_output = np.random.randn(1, 1, self.word_dictionary_size, cnt) * 0
+        ret_image_feature = np.random.randn(1, 1, 4096, cnt) * 0
+        for index in range(0, cnt):
+            a, b = self.calcData()
+            ret_output[0, 0, :, index] = a[0, 0, :, 0]
+            ret_image_feature[0, 0, :, index] = b[0, 0, :, 0]
+            self.next()
+
+        self.data_index = data_index_bak
+        return (ret_output, ret_image_feature)
+
+
+    def nextBatch(self, batch_size):
+        for i in range(0, batch_size):
+            if self.hasNext():
+                self.next()

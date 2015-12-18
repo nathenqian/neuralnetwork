@@ -73,14 +73,11 @@ def local_fprop(image_feature, y_truth): # x = sentences  y_truth is [[][]]
 
     # my_cost = softmax.cost(t3, y_truth)
 
-    def _local_cost(y, y_truth):
-        tmp = y * y_truth
-        # tmp = T.log(tmp.sum(axis=2)).mean(axis=2).mean()
-        tmp = T.log(tmp.max(axis=2)).sum(axis=2).mean()
-        tmp = -tmp
-        return tmp
+    def _cost(y_in, y_truth):
+        res = T.sqrt(((y_in-y_truth)**2+1e-8).sum(axis=2)).sum()
+        return res
 
-    my_cost = euc0.cost(my_out, y_truth)
+    my_cost = _cost(my_out, y_truth)
 
     my_update = []
     layers = [fc2, multimodal_image, multimodal_image2]
@@ -133,18 +130,19 @@ if __name__ == '__main__':
                 data_generator.resetData()
                 print "total data size is " + str(len(data_generator.data))
                 index = 0
+                batch_size = 100
                 while data_generator.hasNext() == True:
-                    index += 1
+                    index += batch_size
                     print "train %s data" % (str(index))
-                    train_data_result, train_data_image_feature = data_generator.calcData()
+                    train_data_result, train_data_image_feature = data_generator.calcBatchData(batch_size)
                     output, cost = train_func(train_data_image_feature, train_data_result)
                     print cost
                     # print data_generator.translate(output)
                     # print data_generator.showProb(output, train_data_result)
                     # print data_generator.translate(train_data_sentence)
                     # from IPython import embed;embed()                    
-                    data_generator.next()
-                    if index == cnt:
+                    data_generator.nextBatch(batch_size)
+                    if index >= cnt:
                         break
         elif command == "shuffle":
             data_generator.shuffle()
@@ -164,5 +162,34 @@ if __name__ == '__main__':
             print data_generator.list(temp_name)
         elif command == "sort":
             data_generator.sortBySentenceLength()
+        elif command == "test":
+            data_generator.resetData()
+            data_generator.shuffle()
+            test_case = 100
+            total_feature = 0
+            error_feature = 0
+            print "start test"
+            while test_case > 0:
+                test_case -= 1
+                data_result, data_image_feature = data_generator.calcData()
+                a, b = test_func(data_image_feature, data_result)
+                feature_index = []
+                output_list = []
+                case_total = 0
+                for i in range(0, data_result.shape[2]):
+                    if (data_result[0, 0, i, 0] > 0.00001):
+                        total_feature += 1
+                        case_total += 1
+                        feature_index.append(i)
+                    output_list.append((a[0, 0, i, 0], i))
+                output_list = sorted(output_list, key = lambda a : -a[0])
+                # print output_list[0 : 10], feature_index
+                for i in range(case_total):
+                    if output_list[i][1] not in feature_index:
+                        error_feature += 1
+
+                data_generator.next()
+            print "finish test total_feature is %s   error_feature is %s" % (str(total_feature), str(error_feature))
+
         else:
             print ">> error"
