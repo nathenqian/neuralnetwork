@@ -10,6 +10,7 @@ from data.data import DataGenerator
 from data.data import DatasetSimple
 from time import localtime
 import argparse
+from monitor import Monitor
 
 def printTime():
     t = localtime()
@@ -135,7 +136,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--show',
                 help="show the every point's situation", action='store_true')
-
+    parser.add_argument('-l', '--load_path',
+                help="load from model file")
     args = parser.parse_args()
 
     base_dir = "../local_data"
@@ -151,59 +153,38 @@ if __name__ == '__main__':
             on_unused_input='warn', allow_input_downcast=True)
     test_func = theano.function(inputs=[data, label, image_feature], outputs=[output, cost],
             on_unused_input='warn', allow_input_downcast=True)
+    
+    mtr = Monitor(layers, load_path = args.load_path, save_path = './train_log_rmsprop')
+    if args.load_path:
+        mtr.load()
 
     # then start train with function
-    command = 'svae'
     while True:
-        print ">> enter command"
-        print ">> "
-        command = raw_input()
-        if command == "t":
-            print ">> enter time"
-            t = int(raw_input())
-#            t = 1
-            print ">> enter words number"
-#            cnt = int(raw_input())
-            cnt = 0
-            while t > 0:
-                t -= 1
-                data_generator.resetData()
-                print "total data size is " + str(len(data_generator.data))
-                index = 0
-                cost_set = []
-                for datapoint in data_generator.get_data_stream():
-                    index += 1
-#                    train_data_sentence, train_data_result, train_data_image_feature = data_generator.calcData()
-                    train_data_sentence = datapoint[0]
-                    train_data_result = datapoint[1]
-                    train_data_image_feature = datapoint[2]
-                    output, cost = train_func(train_data_sentence, train_data_result, train_data_image_feature)
-                    cost_set.append(cost)
-
-                    sys.stderr.write("train {0} data, cost = {1} \r".format(index, cost))
-                    sys.stderr.flush()
-                    if args.show:
-                        print cost
-                        print data_generator.translate(output)
-                        print data_generator.translate(train_data_sentence)
-                    if index == cnt:
-                        break
-                print 'total cost = {}'.format(sum(cost_set)/len(cost_set))
-                # save after trained
-                temp_name = 'train_log_rmsprop/model_rmsprop'
-                for layer in layers:
-                    layer.save_data(temp_name)
-        elif command == "shuffle":
+        epoch_no = 0
+        while epoch_no < 100:
+            epoch_no += 1
+            print "training {} epoch, total data size is {}".format(epoch_no, str(len(data_generator.data)))
             data_generator.shuffle()
-        elif command == "save":
-            print ">> enter name of this data"
-            temp_name = raw_input()
-            for layer in layers:
-                layer.save_data(temp_name)
-        elif command == "load":
-            print ">> enter name of this data"
-            temp_name = raw_input()
-            for layer in layers:
-                layer.load_data(temp_name)
-        else:
-            print ">> error"
+            cost_set = []
+            index = 0
+            for datapoint in data_generator.get_data_stream():
+                index += 1
+                train_data_sentence = datapoint[0]
+                train_data_result = datapoint[1]
+                train_data_image_feature = datapoint[2]
+                output, cost = train_func(train_data_sentence, train_data_result, train_data_image_feature)
+                cost_set.append(cost)
+
+                sys.stderr.write("train {0} data, cost = {1} \r".format(index, cost))
+                sys.stderr.flush()
+                if args.show:
+                    print cost
+                    print data_generator.translate(output)
+                    print data_generator.translate(train_data_sentence)
+                if index == cnt:
+                    break
+            batch_cost = sum(cost_set)/len(cost_set)
+            print 'current batch cost = {}'.format(batch_cost)
+            # save after trained
+            mtr.save()
+            print 'min batch cost = {}'.format(mtr.min_cost)
