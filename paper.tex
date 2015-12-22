@@ -71,24 +71,130 @@ The output should be the beautiful poem whose meaning is close to this image. Th
 
 \section{Related Work}
 	Generating poem is popular in recent years, and there are abundant research on it. On the other hand, explaining image with words has also made great progress after deep learning is widely used. Our approach is a combination of the above two aspects, we select two methods that performing well in corresponding aspects, and try to get a satisfactory result.
-\section{Plan}
-\subsection{Image to Sentence}
-The first part of this problem is to generate a sentence based on the image. This sentence must contain the details of this image, and it can describe this image.
+% \section{Plan}
+% \subsection{Image to Sentence}
+% The first part of this problem is to generate a sentence based on the image. This sentence must contain the details of this image, and it can describe this image.
 
-The method we want to use here is proposed by Junhua Mao\footnote{ Junhua Mao, Wei Xu, Yi Yang, Jiang Wang, Alan L. Yuille : Explain Images with Multimodal Recurrent Neural Networks.}. We use a multimodal Recurrent Neural Networks (m-RNN) model to address both the task of generating novel sentences descriptions for images, and the task of image and sentence retrieval. The whole m-RNN architecture contains a language model part, an image part and a multimodal part. The language model part learns the dense feature embedding for each word in the dictionary and stores the semantic temporal context in recurrent layers. The image part contains a deep Convolutional Neural Network (CNN) \footnote{A. Krizhevsky, I. Sutskever, and G. E. Hinton. Imagenet classification with deep convolutional neural networks. In NIPS, pages 1097–1105, 2012.} which extracts image features.
+% The method we want to use here is proposed by Junhua Mao\footnote{ Junhua Mao, Wei Xu, Yi Yang, Jiang Wang, Alan L. Yuille : Explain Images with Multimodal Recurrent Neural Networks.}. We use a multimodal Recurrent Neural Networks (m-RNN) model to address both the task of generating novel sentences descriptions for images, and the task of image and sentence retrieval. The whole m-RNN architecture contains a language model part, an image part and a multimodal part. The language model part learns the dense feature embedding for each word in the dictionary and stores the semantic temporal context in recurrent layers. The image part contains a deep Convolutional Neural Network (CNN) \footnote{A. Krizhevsky, I. Sutskever, and G. E. Hinton. Imagenet classification with deep convolutional neural networks. In NIPS, pages 1097–1105, 2012.} which extracts image features.
 
 
-\subsection{Translate and Extract}
-Now we get the sentence, as to generate the meaningful poetry, we need to extract keywords from the sentences. We can use a translation process to deal the sentence and only use the words that appears in Chinese poetry dataset that we used in poem generator.
+% \subsection{Translate and Extract}
+% Now we get the sentence, as to generate the meaningful poetry, we need to extract keywords from the sentences. We can use a translation process to deal the sentence and only use the words that appears in Chinese poetry dataset that we used in poem generator.
+
+% \subsection{Poem generator}
+% 	The method we will use to generate poem is proposed by Mirella Lapata\footnote{Xingxing Zhang, Mirella Lapata : Chinese Poetry Generation with Recurrent Neural Networks.}.First, to create the first line of poem, We select all phrases corresponding to the users’s keywords and generate all possible combinations satisfying the tonal pattern constraints. We use a language model to rank the generated candidates and select the best ranked one as the first line in the poem. In implementation, we employ a character-based recurrent neural network language model.
+% 	And after that, we generate the rest poem lines with original lines. Convert lines $s_1$...$s_i$ into vectors $v_1$...$v_i$ with a convolutional sentence model (CSM). Next, a recurrent context model (RCM) takes $v_1$...$v_i$ as input and outputs $u_{j,i}$.Finally, $u_{1,i}$, $u_{2,i}$,...,$u_{j,i}$ and the first $j$ characters $w_1$...$w_j$ in line $s_{i+1}$ serve as input to a recurrent generation model (RGM) which estimates $P(w_{j+1} = k | w_{1:j} ,s_{1:i} )$ with $k\in V$, the probability distribution of the $j+1$ th character over all words in the vocabulary $V$.
+%-------------------------------------------------------------------------
+
+\section{Approach}
+The way we solve this project is to build three seperate parts.
+\begin{itemize}
+\item image feature extractor
+\item translation
+\item poem generator
+\end{itemize}
+
+These three part will process the data one by one and finally generate the poem.
+
+\subsection{Extractor}
+The first part is extracting the feature from image, and these features can be transformed to translation part and poem generator part to generate the poem.
+
+To extract features from image, we use a 16-layer VGGnet trained for ImageNet, which performs well in many experiment about image proccessing. 
+However, the result of this model is not good enough for us to make the poem, for the thing needed by the poem can’t be transformed from the image features directly. Poem generator need more detailed information. 
+
+As to make it more suitable for our target, we fine-tuning it on another problem. We have built a model to explain images with english sentences for IAPRTC12 datasets. In the dataset, each data has sentences descriptions for context of it. We hope it will lead VGGnet to extract important context of the image, and these contexts are the major things that lead the poem generator to generate the poem. The specific model architecture is imspired from Junhua Mao’s work[].
+
+This model is combined by two part. First part extracts features from images, and we use our VGGnet. Second part is based on recurrent neural network to generate sentences with image features and word vectors. In practical, our sentence generation model is different from Junhua Mao’s work[], shown in figure 1. We encode input words with two FullyConnected layers, put it from a sparse vector to a dense vector. And then put it into a LSTM layer to generate next word’s dense representation. After that, we joint the output of LSTM layer, FullyConnected layer and image features, as the input of next layer. Finally we use a FullyConnected layer and a Softmax layer to decode the vector, transform it from a dense vector to a sparse word representation.
+
+\subsection{Translation}
+In poem generator part, we want to create the next sentence by the last sentence, so that what we need to provide with this generator is the first sentence of poem and it will create the rest part of poem. However, how to translate the feature extracted from the image into the first poem is a difficult thing. 
+
+The solution of this puzzle is that we simply make the features from the image into one meaningless sentence, so that this meaningless sentence will lead the generator to create the first sentence.
+
+The translation part will translate the features got from extractor into one meaningless sentence. This sentence may be weird of it's order of word but contains enough information of the corresponding image.
+
+具体过程是啥？？？？？？？？？？？
 
 \subsection{Poem generator}
-	The method we will use to generate poem is proposed by Mirella Lapata\footnote{Xingxing Zhang, Mirella Lapata : Chinese Poetry Generation with Recurrent Neural Networks.}.First, to create the first line of poem, We select all phrases corresponding to the users’s keywords and generate all possible combinations satisfying the tonal pattern constraints. We use a language model to rank the generated candidates and select the best ranked one as the first line in the poem. In implementation, we employ a character-based recurrent neural network language model.	And after that, we generate the rest poem lines with original lines. Convert lines $s_1$...$s_i$ into vectors $v_1$...$v_i$ with a convolutional sentence model (CSM). Next, a recurrent context model (RCM) takes $v_1$...$v_i$ as input and outputs $u_{j,i}$.Finally, $u_{1,i}$, $u_{2,i}$,...,$u_{j,i}$ and the first $j$ characters $w_1$...$w_j$ in line $s_{i+1}$ serve as input to a recurrent generation model (RGM) which estimates $P(w_{j+1} = k | w_{1:j} ,s_{1:i} )$ with $k\in V$, the probability distribution of the $j+1$ th character over all words in the vocabulary $V$.
-%-------------------------------------------------------------------------
-\section{Dataset}
-The dataset we used is IAPR TC-12 dataset, which used to training the model that explain image. 
 
-The other is Chinese Poetry corpus to train for the generate part.
-\section{Intermediate Result}
-We have built a temporary framework and consulted one expert about this problem. The expert thought it's a practical idea and gave some advice.
-We will soon try to use theano to implement our idea. Recent three weeks are the deadline of building a cpu so we don't have enough time to try our idea.
+\begin{figure}[t]
+\begin{center}
+   \includegraphics[width=0.8\linewidth]{report/poem_layers.png}
+\end{center}
+   \caption{The network of poem part.}
+\label{fig:poem_layer_network}
+\end{figure}
+
+As the first sentence has been created by the generator, we can use our model to generate the following three sentences.
+We use RNN (recurrent neural network) to train this poem generator model. The reason why we choose this model is that RNN model is wonderful to train the things that can be determined by the previous. 
+
+We only train the poem which the length of sentence of is 5, this ensure the backpropagation won’t be effectless (the derivate won’t be too small to change the model). 
+
+The reason that we don’t use LSTM ( Long Short Term Memory networks ) is it’s much more efficient, and we are constrained by the GPU, we only have two laptops to train our models. 
+
+The train data is a sentence and output a single word represent the following word of this sentence.
+
+For we don’t have enough computing resource to train our model, we simplify our model.
+
+The first layer is input layer, as a one hot decoder layer. The sentence will be decoded here to generate a five vectors that encoded from the origin sentence. The one hot decoder is a vector with only one element is 1, and else are 0. If the input containing 5 words is $[x_{0}, x_{1}, x_{2}, x_{3}, x_{4}]$. Each $x_{i}, 0 <= i <= 4$ is the a word, and will be transformed into 
+\begin{center}
+$y_{i} = [0, 0, 0, ... 0, charSet[x_{i}], 0, 0, ... , 0, 0, 0]$
+\end{center}
+
+Here charSet is the charset of all poems, we map a single $word$ into a number $charSet[x_{i}]$.
+After this layer, we get a vector $output_{5, size(charSet)}$, and this vector will transform into the RNN layer.
+
+The next layer is a RNN layer, use to calculate the following word based on the input sentence. We only use the last time of RNN’s output as the output of layer, and process it into third layer. This output can calculate the output based on input (five words).
+
+The layer has three parameters $w, h, b$, in $0 <= step_{i} <= 4$, it will calculate the $input_{5, size(charSet)}$ as follow.
+\begin{center}
+    $result_{i} = w * input_{i} + h * result_{i - 1} + b$
+\end{center}
+
+The third layer is a fclayer. In this layer we map the output from the rnn layer to the vector of the same size of the word set. We don’t use any activation function because it’s enough to train the good sentence without any activation function.
+
+The last layer is a softmax layer, we use softmax layer for two reasons.
+
+\begin{itemize}
+\item Generating proper loss function to update this layer.
+\item It can generate the probability of next word. For the rhythm purpose, we should decide the next word not only by the probability, but also follow the rule of rhythm which means the fourth sentence’s last word should match with the second sentence’s last word. Softmax layer is the best choice as it can calculate each word’s probability to be the next word. We only need to pick up the word that satisfy the rule of rhythm and has the maximum probability. 
+\end{itemize}
+
+\section{Experiment}
+
+
+
+\subsection{Dataset}
+The dataset we used for poem generator is Tang Poems, Song Poems, Song Ci, Ming Poems, Qing Poems, and Tai Poems. It contains 78859 poems, and can be downloaded here. We only use quatrains and five words per sentence to train, validate and test. Finally the total poems are 11098.
+
+\begin{figure}[t]
+\begin{center}
+   \includegraphics[width=0.8\linewidth]{report/frequent.png}
+\end{center}
+   \caption{The frequent of word in dataset.}
+\label{fig:frequent}
+\end{figure}
+
+During the training, we find some some words appear too often, like no. These words appear more than 40\% of dataset, which will influence the RNN layer to output this word too often. We want to prevent from this thing happening, so we filter the dataset and choose only 2000 poems to be the training set. To increase the diversity of words appeared in sentences, we set the evaluate function.
+Use this function, we select part poems from dataset and ensure the word frequency are most equal. See . Each poem will generate 15 data, for example .
+Origin poem 春眠不觉晓，处处闻啼鸟
+Input   output
+春眠不觉晓 处
+眠不觉晓处 处
+不觉晓处处 闻
+觉晓处处闻 啼
+晓处处闻啼 鸟
+The size of validate set is 100, and test size is 100. 
+The way of train the model is quite inter
+
+
+\begin{itemize}
+\item[*] a
+\item[*] b
+\end{itemize}
+
+
+
+
+
 \end{document}
