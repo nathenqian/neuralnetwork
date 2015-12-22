@@ -107,20 +107,25 @@ def local_fprop(x, y_truth, image_feature): # x = sentences  y_truth is [[][]]
         multimodal_image
     ]
 
+    # L2 regularization
+    for layer in layers:
+        for p in layer.get_params():
+            my_cost += (p**2).mean()
+
     # RMSprop
-    rho = 0.9
-    epision = 1e-6
+#    rho = 0.9
+#    epision = 1e-6
     for layer in layers:
         for p in layer.get_params():
             lr = layer.learning_rate
             wd = layer.weight_decay
             g = T.grad(cost=my_cost, wrt=p)
-            p_delta = theano.shared(p.get_value() * 0.)
-            p_delta_new = rho * p_delta + (1 - rho) * g**2;
-            gradient_scaling = T.sqrt(p_delta_new + epision)
-            g = g / gradient_scaling
-            my_update.append((p_delta, p_delta_new))
-            my_update.append((p, p * (1 - wd) - lr * g))
+#            p_delta = theano.shared(p.get_value() * 0.)
+#            p_delta_new = rho * p_delta + (1 - rho) * g**2;
+#            gradient_scaling = T.sqrt(p_delta_new + epision)
+#            g = g / gradient_scaling
+#            my_update.append((p_delta, p_delta_new))
+            my_update.append((p, p - lr * (p * wd + g)))
 
     return my_out, my_cost, my_update, layers
 
@@ -151,8 +156,8 @@ if __name__ == '__main__':
     output, cost, update, layers = local_fprop(data, label, image_feature)
     train_func = theano.function(inputs=[data, label, image_feature], outputs=[output, cost], updates=update,
             on_unused_input='warn', allow_input_downcast=True)
-    test_func = theano.function(inputs=[data, label, image_feature], outputs=[output, cost],
-            on_unused_input='warn', allow_input_downcast=True)
+#    test_func = theano.function(inputs=[data, label, image_feature], outputs=[output, cost],
+#            on_unused_input='warn', allow_input_downcast=True)
     
     mtr = Monitor(layers, load_path = args.load_path, save_path = './train_log_rmsprop')
     if args.load_path:
@@ -181,10 +186,8 @@ if __name__ == '__main__':
                     print cost
                     print data_generator.translate(output)
                     print data_generator.translate(train_data_sentence)
-                if index == cnt:
-                    break
             batch_cost = sum(cost_set)/len(cost_set)
             print 'current batch cost = {}'.format(batch_cost)
             # save after trained
-            mtr.save()
+            mtr.save(batch_cost)
             print 'min batch cost = {}'.format(mtr.min_cost)

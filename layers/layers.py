@@ -36,7 +36,7 @@ class LayerBase(object):
     def __init__(self, **kwargs):
         super(LayerBase, self).__init__()
         self.learning_rate = 0.001
-        self.weight_decay = 0.000001
+        self.weight_decay = 0.00001
         self.dropout_prob = None
         if 'learning_rate' in kwargs:
             self.learning_rate = kwargs['learning_rate']
@@ -355,7 +355,7 @@ class ColumnWiseSoftmax(LayerBase):
     def cost(self, y_in, y_truth):
         x = y_in - y_in.max(axis=2, keepdims=True)
         log_prob = x - T.log(T.exp(x).sum(axis=2, keepdims=True))
-        res = -(y_truth * log_prob).sum(axis=[2,3]).mean()
+        res = -(y_truth * log_prob).sum(axis=[2]).mean()
         return res
 
     def get_params(self):

@@ -10,7 +10,6 @@ class Monitor(object):
     
     def load(self):
         assert not self.load_path == None, self.load_path
-        assert os.path.exists(self.load_path), self.load_path
         for layer in self.layers:
             layer.load_data(self.load_path)
 
